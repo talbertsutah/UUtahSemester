@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Helpers;
-use App\Exceptions\SemesterInvalidConstructorInput;
+namespace talbertsutah\UUtahSemester;
+
+use Exceptions\SemesterInvalidConstructorInput;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
