@@ -1,7 +1,7 @@
 <?php
 
-namespace App\Helpers;
-use App\Traits\EnumToArray;
+namespace talbertsutah\UUtahSemester;
+use Traits\EnumToArray;
 
 /*  Enum that holds information about the scheme for converting semesters to codes
 *
