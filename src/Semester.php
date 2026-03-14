@@ -2,9 +2,8 @@
 
 namespace talbertsutah\UUtahSemester;
 
-use Exceptions\SemesterInvalidConstructorInput;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
+use talbertsutah\UUtahSemester\Exceptions\SemesterInvalidConstructorInput;
+use talbertsutah\UUtahSemester\Exceptions\SemesterInvalidInput;
 
 
 class Semester {
@@ -15,18 +14,15 @@ class Semester {
 
     /**
      * Create a new Semester instance
-     * @param int|string $val
+     * 
+     * @param int|string $val A valid semester code (int) or string ('Fall 2024', etc.)
+     * @throws SemesterInvalidConstructorInput If input is an invalid type
+     * @throws SemesterInvalidInput If the value is not a valid semester
      */
     function __construct(int|string $val) 
     {    
-        try {
-            $this->isValidInput($val);
-            $this->set($val);
-        }
-        catch (SemesterInvalidConstructorInput $e) {
-            echo $e->errorMessage();
-        }
-
+        $this->validateInput($val);
+        $this->set($val);
     }
 
     /**
@@ -58,18 +54,29 @@ class Semester {
         return preg_match('/(Fall|Spring|Summer)\\s\\d{4}/i', $semesterString);
     }
 
-    private function isValidInput(int|string $val) : bool
+    /**
+     * Validate that the input is a valid type and value, throws exception if not
+     *
+     * @param int|string $val The value to validate
+     * @return void
+     * @throws SemesterInvalidConstructorInput If input is an invalid type
+     * @throws SemesterInvalidInput If the value is not a valid semester
+     */
+    private function validateInput(int|string $val): void
     {
         if (is_int($val)) {
-            return self::isValidCode($val);
+            if (!self::isValidCode($val)) {
+                throw new SemesterInvalidInput($val, 'code');
+            }
         }
         elseif (is_string($val)) {
-            return self::isValidString($val);
+            if (!self::isValidString($val)) {
+                throw new SemesterInvalidInput($val, 'string');
+            }
         }
         else {
             throw new SemesterInvalidConstructorInput($val);
         }
-
     }
 
     /**
@@ -111,89 +118,83 @@ class Semester {
     }
 
     /**
-     * Set the interal code and string representation of the semester instance
+     * Set the internal code and string representation of the semester instance
      * Input can be either a string representation or an integer representation
-     * @param int|string $val
+     * 
+     * @param int|string $val A semester code or semester string
      * @return void
+     * @throws SemesterInvalidInput If the value is not a valid semester
      */
-    public function set(int|string $val)
+    public function set(int|string $val): void
     {
         if (is_int($val) || is_numeric($val)) {
-        
-            if (!(self::isValidCode(($val)))) {
-                $this->intFormat = -1;
+            $val = (int) $val;
+            if (!self::isValidCode($val)) {
+                throw new SemesterInvalidInput($val, 'code');
             }
-            else {
-                $this->intFormat = $val;
-                $this->stringFormat = self::codeToString($val);
-            }
+            $this->intFormat = $val;
+            $this->stringFormat = self::codeToString($val);
         }
         elseif (is_string($val)) {
-
-            if (!(self::isValidString($val))) {
-                /* TODO Throw an error */
-                $this->intFormat = -1;
+            if (!self::isValidString($val)) {
+                throw new SemesterInvalidInput($val, 'string');
             }
-            else {
-                $this->stringFormat = $val;
-                $this->intFormat = self::stringToCode($val);
-            }
+            $this->stringFormat = $val;
+            $this->intFormat = self::stringToCode($val);
         }
         else {
-            /* TODO Throw an error */
-            $this->intFormat = NULL;
-            $this->stringFormat = NULL;
+            throw new SemesterInvalidInput($val);
         }
     }
 
     /**
-     * Convert an integer representation of a semester into the spring representation
+     * Convert an integer representation of a semester into the string representation
      * 
      * @example Semester::codeToString(1244) returns 'Fall 2024'
-     * @param int $intCode
-     * @return string
+     * @param int $intCode The semester code to convert
+     * @return string The string representation ('Fall 2024', etc.)
+     * @throws SemesterInvalidInput If the code is invalid
      */
-
-    /* TODO
-       Check if the input code is null, if so return a null
-       Check if the input code is valid, if not throw an error
-    */     
     public static function codeToString(int $intCode) : string 
     {
-        if (!(self::isValidCode($intCode))) return "ERROR";
+        if (!self::isValidCode($intCode)) {
+            throw new SemesterInvalidInput($intCode, 'code');
+        }
         return self::codeSemester($intCode) . ' ' . self::codeYear($intCode);
     }
 
     /**
      * Return the year part of an integer representation of a semester
+     * 
      * @example Semester::codeYear(1244) returns 2024 since it is 1900 + 124
-     * @param int $intCode
-     * @return int
+     * @param int $intCode The semester code
+     * @return int The year
+     * @throws SemesterInvalidInput If the code is invalid
      */
-
-    /* TODO
-       Check if the input code is valid, if not throw an error
-    */
     public static function codeYear(?int $intCode): ?int 
     { 
         if (is_null($intCode)) return null;
+        if (!self::isValidCode($intCode)) {
+            throw new SemesterInvalidInput($intCode, 'code');
+        }
         $lastDigit = $intCode % 10;
         return ($intCode - $lastDigit)/10 + self::ZEROYEAR;
     }
 
     /**
      * Return the semester part of an integer representation of a semester
+     * 
      * @example Semester::codeSemester(1244) returns 'Spring'
-     * @param int $intCode
-     * @return string
+     * @param int $intCode The semester code
+     * @return string The semester name (Spring, Summer, or Fall)
+     * @throws SemesterInvalidInput If the code is invalid
      */
-
-    /* TODO
-       Check if the input code is valid, if not throw an error
-    */
     public static function codeSemester(?int $intCode): ?string 
     {
         if (is_null($intCode)) return null;
+        if (!self::isValidCode($intCode)) {
+            throw new SemesterInvalidInput($intCode, 'code');
+        }
         $lastDigit = $intCode % 10;
         return SemesterKey::asArrayReversed()[$lastDigit];
     }
@@ -202,20 +203,21 @@ class Semester {
      * Convert the string representation of a semester into the integer representation
      * 
      * @example Semester::stringToCode('Fall 2024') returns 1244
-     * @param string $semesterString
-     * @return int
-     */
-
-     /* TODO
-        Check if the input string is valid, if not throw an error
+     * @param string $semesterString The semester string to convert ('Fall 2024', etc.)
+     * @return int The semester code
+     * @throws SemesterInvalidInput If the string is invalid
      */
     public static function stringToCode(?string $semesterString): ?int
     {
         if (is_null($semesterString)) return null;
         
+        if (!self::isValidString($semesterString)) {
+            throw new SemesterInvalidInput($semesterString, 'string');
+        }
+        
         $year = substr($semesterString, -4);
         $start = ($year - self::ZEROYEAR)*10;
-        $semester = Str::chopEnd($semesterString, ' ' . $year);
+        $semester = substr($semesterString, 0, strpos($semesterString, ' '));
         $digit =  SemesterKey::asArray()[$semester];
 
         return $start + $digit;
@@ -235,9 +237,10 @@ class Semester {
     public static function random(int $minYear = 1900, int $maxYear = 2899, $exclude = []): static
     {
         $possibleSemesters = array_diff(SemesterKey::names(), $exclude);
-        $randCode = fake()->randomElement($possibleSemesters) . ' ' . fake()->numberBetween($minYear, $maxYear);
+        $randSemester = $possibleSemesters[array_rand($possibleSemesters)];
+        $randYear = rand($minYear, $maxYear);
         
-        return new static($randCode);
+        return new static($randSemester . ' ' . $randYear);
     }
 
 
@@ -249,9 +252,9 @@ class Semester {
      */
     public static function now(): static
     {
-        $currDate = Carbon::now();
-        $currYear = $currDate->year;
-        $currSemester = ($currDate->dayOfYear < 126) ? 'Spring' : ($currDate->dayOfYear < 226 ? 'Summer' : 'Fall');
+        $currYear = (int) date('Y');
+        $dayOfYear = (int) date('z') + 1; // date('z') is 0-based, so add 1 for 1-based day number
+        $currSemester = ($dayOfYear < 126) ? 'Spring' : ($dayOfYear < 226 ? 'Summer' : 'Fall');
 
         return new static($currSemester . ' ' . $currYear);
     }
@@ -339,6 +342,182 @@ class Semester {
     {
         $this->addYears(-$toSubtract);
         return $this;
+    }
+
+    /**
+     * Compare this semester with another semester
+     * 
+     * @example $sem1->isBefore($sem2) returns true if sem1 occurs before sem2
+     * @param Semester|int|string $other A Semester instance, semester code, or semester string
+     * @return bool True if this semester occurs before the other semester
+     * @throws SemesterInvalidInput If the comparison value is invalid
+     */
+    public function isBefore($other): bool
+    {
+        $otherCode = $this->normalizeToCode($other);
+        return $this->intFormat < $otherCode;
+    }
+
+    /**
+     * Check if this semester occurs after another semester
+     * 
+     * @example $sem1->isAfter($sem2) returns true if sem1 occurs after sem2
+     * @param Semester|int|string $other A Semester instance, semester code, or semester string
+     * @return bool True if this semester occurs after the other semester
+     * @throws SemesterInvalidInput If the comparison value is invalid
+     */
+    public function isAfter($other): bool
+    {
+        $otherCode = $this->normalizeToCode($other);
+        return $this->intFormat > $otherCode;
+    }
+
+    /**
+     * Check if this semester is the same as another semester
+     * 
+     * @example $sem1->equals($sem2) returns true if sem1 and sem2 represent the same semester
+     * @param Semester|int|string $other A Semester instance, semester code, or semester string
+     * @return bool True if both semesters are equal
+     * @throws SemesterInvalidInput If the comparison value is invalid
+     */
+    public function equals($other): bool
+    {
+        $otherCode = $this->normalizeToCode($other);
+        return $this->intFormat === $otherCode;
+    }
+
+    /**
+     * Get the difference between this semester and another semester
+     * 
+     * @example $sem1->getDifference($sem2) returns the number of semesters between them
+     * Positive value means $other is in the past, negative means $other is in the future
+     * @param Semester|int|string $other A Semester instance, semester code, or semester string
+     * @param string $unit Either 'semester' (default) or 'year' for units of comparison
+     * @return int|float The difference in semesters or years (float if unit is 'year')
+     * @throws SemesterInvalidInput If the comparison value is invalid
+     */
+    public function getDifference($other, string $unit = 'semester')
+    {
+        $otherCode = $this->normalizeToCode($other);
+        $semesterDiff = $this->calculateSemesterDifference($this->intFormat, $otherCode);
+        
+        if ($unit === 'year' || $unit === 'years') {
+            return $semesterDiff / 3;
+        }
+        return $semesterDiff;
+    }
+
+    /**
+     * Get all semesters between this semester and another (inclusive)
+     * 
+     * @example $sem1->getSemestersBetween($sem2) returns an array of Semester objects
+     * @param Semester|int|string $other A Semester instance, semester code, or semester string
+     * @return array Array of Semester instances in chronological order
+     * @throws SemesterInvalidInput If the comparison value is invalid
+     */
+    public function getSemestersBetween($other): array
+    {
+        $otherCode = $this->normalizeToCode($other);
+        $start = min($this->intFormat, $otherCode);
+        $end = max($this->intFormat, $otherCode);
+        
+        $semesters = [];
+        for ($code = $start; $code <= $end; $code += 10) {
+            // Check if the last digit is a valid semester digit (4, 6, or 8)
+            $lastDigit = $code % 10;
+            if (in_array($lastDigit, SemesterKey::values())) {
+                $semesters[] = new static($code);
+            }
+        }
+        // Handle the last semester in range if needed
+        if ($end % 10 !== 4 && $end % 10 !== 6 && $end % 10 !== 8) {
+            $yearOfEnd = ($end - $end % 10) / 10;
+            $lastDigitRemaining = $end % 10;
+            // Find the appropriate semester digit for the end year
+            foreach (SemesterKey::values() as $digit) {
+                $code = $yearOfEnd * 10 + $digit;
+                if ($code <= $end && !in_array($code, array_map(fn($s) => (int)$s->getCode(), $semesters))) {
+                    $semesters[] = new static($code);
+                }
+            }
+        }
+        return $semesters;
+    }
+
+    /**
+     * Convert the semester instance to an associative array
+     * 
+     * @return array An array with 'code', 'string', 'term', and 'year' keys
+     */
+    public function toArray(): array
+    {
+        $termAndYear = $this->getTermAndYear();
+        return [
+            'code' => $this->getCode(),
+            'string' => $this->getString(),
+            'term' => $termAndYear['term'],
+            'year' => $termAndYear['year'],
+        ];
+    }
+
+    /**
+     * Convert the semester instance to JSON
+     * 
+     * @param int $flags JSON encoding flags (default: JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+     * @return string JSON representation of the semester
+     */
+    public function toJson(int $flags = 448): string // 448 = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
+    {
+        return json_encode($this->toArray(), $flags);
+    }
+
+    /**
+     * Helper method to normalize various input types to a semester code
+     * 
+     * @param Semester|int|string $value
+     * @return int The semester code
+     * @throws SemesterInvalidInput If the value is invalid
+     */
+    private function normalizeToCode($value): int
+    {
+        if ($value instanceof self) {
+            return (int) $value->getCode();
+        } elseif (is_int($value) || is_numeric($value)) {
+            $code = (int) $value;
+            if (!self::isValidCode($code)) {
+                throw new SemesterInvalidInput($code, 'code');
+            }
+            return $code;
+        } elseif (is_string($value)) {
+            if (!self::isValidString($value)) {
+                throw new SemesterInvalidInput($value, 'string');
+            }
+            return self::stringToCode($value);
+        } else {
+            throw new SemesterInvalidInput($value);
+        }
+    }
+
+    /**
+     * Calculate the difference in semesters between two semester codes
+     * Positive result means first code is after second code
+     * 
+     * @param int $code1 First semester code
+     * @param int $code2 Second semester code
+     * @return int The difference in number of semesters
+     */
+    private static function calculateSemesterDifference(int $code1, int $code2): int
+    {
+        $year1 = ($code1 - $code1 % 10) / 10;
+        $sem1 = ($code1 % 10 - 4) / 2;
+        
+        $year2 = ($code2 - $code2 % 10) / 10;
+        $sem2 = ($code2 % 10 - 4) / 2;
+        
+        $yearDiff = $year1 - $year2;
+        $semDiff = $sem1 - $sem2;
+        
+        return $yearDiff * 3 + $semDiff;
     }
 
 }
