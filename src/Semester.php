@@ -218,6 +218,7 @@ class Semester {
         $year = substr($semesterString, -4);
         $start = ($year - self::ZEROYEAR)*10;
         $semester = substr($semesterString, 0, strpos($semesterString, ' '));
+        $semester = ucfirst(strtolower($semester)); // Normalize to title case
         $digit =  SemesterKey::asArray()[$semester];
 
         return $start + $digit;
