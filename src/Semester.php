@@ -284,7 +284,7 @@ class Semester {
     /**
      * Add input number of semesters to the instance, can be negative
      * 
-     * @example                 $semester->addSemesters(11) shifts the internal value forward in time by 11 semesters
+     * @example $semester->addSemesters(11) shifts the internal value forward in time by 11 semesters
      * @param int $toAdd
      * @return $this
      */
@@ -293,12 +293,14 @@ class Semester {
         $currSemesterCode = $this->intFormat % 10;
         $mod3Digit = ($currSemesterCode - 4)/2; 
         $shiftTo = $mod3Digit + $toAdd;
-        $newSemesterCode = $shiftTo % 3;
-        $newSemesterCode += ($newSemesterCode < 0) ? 3 : 0;     // Shift to deal with the fact that for (a mod b) PHP returns the value with the same sign as a
-        $newSemesterCode = 2*$newSemesterCode + 4;
-        $yearsToAdd = intdiv($shiftTo, 3);                      
+        
+        // Use floor division to properly handle negative numbers
+        // This ensures: $shiftTo = 3 * $yearsToAdd + $newSemesterCode
+        $yearsToAdd = floor($shiftTo / 3);
+        $newSemesterCode = $shiftTo - 3 * $yearsToAdd;
+        $newSemesterCode = 2 * $newSemesterCode + 4;
 
-        $this->intFormat += 10*$yearsToAdd;
+        $this->intFormat += 10 * $yearsToAdd;
         $this->intFormat += $newSemesterCode - $currSemesterCode;
         $this->stringFormat = self::codeToString($this->intFormat);
 
