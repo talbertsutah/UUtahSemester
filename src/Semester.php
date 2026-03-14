@@ -2,7 +2,6 @@
 
 namespace talbertsutah\UUtahSemester;
 
-use talbertsutah\UUtahSemester\Exceptions\SemesterInvalidConstructorInput;
 use talbertsutah\UUtahSemester\Exceptions\SemesterInvalidInput;
 
 
@@ -16,7 +15,7 @@ class Semester {
      * Create a new Semester instance
      * 
      * @param int|string $val A valid semester code (int) or string ('Fall 2024', etc.)
-     * @throws SemesterInvalidConstructorInput If input is an invalid type
+     * @throws TypeError If input is not int or string
      * @throws SemesterInvalidInput If the value is not a valid semester
      */
     function __construct(int|string $val) 
@@ -55,11 +54,11 @@ class Semester {
     }
 
     /**
-     * Validate that the input is a valid type and value, throws exception if not
+     * Validate that the input is a valid semester value, throws exception if not
+     * Type checking is handled by the constructor parameter type hint
      *
      * @param int|string $val The value to validate
      * @return void
-     * @throws SemesterInvalidConstructorInput If input is an invalid type
      * @throws SemesterInvalidInput If the value is not a valid semester
      */
     private function validateInput(int|string $val): void
@@ -73,9 +72,6 @@ class Semester {
             if (!self::isValidString($val)) {
                 throw new SemesterInvalidInput($val, 'string');
             }
-        }
-        else {
-            throw new SemesterInvalidConstructorInput($val);
         }
     }
 
