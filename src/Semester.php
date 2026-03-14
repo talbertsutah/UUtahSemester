@@ -139,6 +139,12 @@ class Semester {
             if (!self::isValidString($val)) {
                 throw new SemesterInvalidInput($val, 'string');
             }
+            // Normalize the semester name to title case
+            $semester = substr($val, 0, strpos($val, ' '));
+            $semester = ucfirst(strtolower($semester));
+            $year = substr($val, -4);
+            $val = $semester . ' ' . $year;
+            
             $this->stringFormat = $val;
             $this->intFormat = self::stringToCode($val);
         }
