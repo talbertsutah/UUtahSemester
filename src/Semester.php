@@ -8,7 +8,7 @@ use talbertsutah\UUtahSemester\Exceptions\SemesterInvalidInput;
 class Semester {
 
     private string $stringFormat;
-    private string $intFormat;
+    private int $intFormat;
     const ZEROYEAR = 1900;
 
     /**
