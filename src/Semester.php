@@ -18,7 +18,7 @@ class Semester {
      * @throws TypeError If input is not int or string
      * @throws SemesterInvalidInput If the value is not a valid semester
      */
-    function __construct(int|string $val) 
+    public function __construct(int|string $val) 
     {    
         $this->validateInput($val);
         $this->set($val);
@@ -427,23 +427,11 @@ class Semester {
         $end = max($this->intFormat, $otherCode);
         
         $semesters = [];
-        for ($code = $start; $code <= $end; $code += 10) {
+        for ($code = $start; $code <= $end; $code++) {
             // Check if the last digit is a valid semester digit (4, 6, or 8)
             $lastDigit = $code % 10;
             if (in_array($lastDigit, SemesterKey::values())) {
                 $semesters[] = new static($code);
-            }
-        }
-        // Handle the last semester in range if needed
-        if ($end % 10 !== 4 && $end % 10 !== 6 && $end % 10 !== 8) {
-            $yearOfEnd = ($end - $end % 10) / 10;
-            $lastDigitRemaining = $end % 10;
-            // Find the appropriate semester digit for the end year
-            foreach (SemesterKey::values() as $digit) {
-                $code = $yearOfEnd * 10 + $digit;
-                if ($code <= $end && !in_array($code, array_map(fn($s) => (int)$s->getCode(), $semesters))) {
-                    $semesters[] = new static($code);
-                }
             }
         }
         return $semesters;
