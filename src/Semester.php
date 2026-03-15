@@ -198,7 +198,7 @@ class Semester {
             throw new SemesterInvalidInput($intCode, 'code');
         }
         $lastDigit = $intCode % 10;
-        return SemesterKey::asArrayReversed()[$lastDigit];
+        return SemesterKey::digitToName()[$lastDigit];
     }
 
     /**
@@ -221,7 +221,7 @@ class Semester {
         $start = ($year - self::ZEROYEAR)*10;
         $semester = substr($semesterString, 0, strpos($semesterString, ' '));
         $semester = ucfirst(strtolower($semester)); // Normalize to title case
-        $digit =  SemesterKey::asArray()[$semester];
+        $digit = SemesterKey::nameToDigit()[$semester];
 
         return $start + $digit;
     }
@@ -257,7 +257,7 @@ class Semester {
     {
         $currYear = (int) date('Y');
         $dayOfYear = (int) date('z') + 1; // date('z') is 0-based, so add 1 for 1-based day number
-        $currSemester = ($dayOfYear < 126) ? 'Spring' : ($dayOfYear < 226 ? 'Summer' : 'Fall');
+        $currSemester = SemesterKey::fromDayOfYear($dayOfYear)->name;
 
         return new static($currSemester . ' ' . $currYear);
     }
