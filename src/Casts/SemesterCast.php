@@ -1,3 +1,5 @@
+<?php
+
 namespace talbertsutah\UUtahSemester\Casts;
 
 use talbertsutah\UUtahSemester\Semester;
